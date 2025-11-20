@@ -1,34 +1,29 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from './HomeScreen';
 import Sanpham3Sqlite from './Sanpham3Sqlite';
 import ProductDetailScreen from './ProductDetailScreen';
-// import AboutScreen from './AboutScreen';
+import ProductListScreen from './ProductsByCategoryScreen';
 import ProductsByCategoryScreen from './ProductsByCategoryScreen';
-import { Product } from './database';
+import { Category, Product } from './database';
 
+// ✅ Mở rộng type cho tất cả các màn hình
 export type RootStackParamList = {
-  Home: undefined;
   Sanpham3Sqlite: undefined;
-  About: undefined;
   ProductDetail: { product: Product };
-  Details: { product: Product };
-  ProductsByCategory: { categoryId: number; categoryName?: string };
+  ProductsByCategory: { categoryId: number; categoryName?: string }; // mới
 };
 
+// Gán type này cho Stack Navigator
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigatorProduct() {
   return (
-    <Stack.Navigator
-      initialRouteName="Home"
-      screenOptions={{ headerShown: false }}
-    >
-      <Stack.Screen name="Home" component={HomeScreen} />
-      {/* <Stack.Screen name="About" component={AboutScreen} /> */}
-      <Stack.Screen name="Sanpham3Sqlite" component={Sanpham3Sqlite} />
-      <Stack.Screen name="Details" component={ProductDetailScreen} />
-      <Stack.Screen name="ProductsByCategory" component={ProductsByCategoryScreen} />
+    <Stack.Navigator>
+      {/* Màn hình cũ */}
+      <Stack.Screen name="Sanpham3Sqlite" component={Sanpham3Sqlite} options={{ title: 'Tất cả sản phẩm' }} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Chi tiết sản phẩm' }} />
+
+      {/* Màn hình mới */}
+      <Stack.Screen name="ProductsByCategory" component={ProductsByCategoryScreen} />    
     </Stack.Navigator>
   );
 }

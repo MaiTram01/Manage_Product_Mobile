@@ -1,12 +1,10 @@
-// HomeStackScreen.tsx
-
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "./HomeScreen";
-import DetailsScreen from "./DetailsScreen";
-import ProductsByCategoryScreen from './ProductsByCategoryScreen'; // Import the screen
-
-import { HomeStackParamList } from "./types"; // Use the updated types
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from './HomeScreen';
+import { HomeStackParamList } from './types';
+import ProductDetailScreen from './ProductDetailScreen';
+import ProductsByCategoryScreen from './ProductsByCategoryScreen';
+// import AdminDashboard from './admin/AdminDashboard';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -14,9 +12,9 @@ const HomeStackScreen = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Home">
       <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Details" component={DetailsScreen} />
-      {/* Add ProductsByCategoryScreen to allow navigation to it */}
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="ProductsByCategory" component={ProductsByCategoryScreen} />
+      {/* <Stack.Screen name="AdminDashboard" component={AdminDashboard} /> */}
     </Stack.Navigator>
   );
 };

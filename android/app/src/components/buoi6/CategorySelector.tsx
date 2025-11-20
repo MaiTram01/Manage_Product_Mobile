@@ -1,6 +1,5 @@
-// CategorySelector.tsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Category } from './database';
 
 interface Props {
@@ -9,33 +8,42 @@ interface Props {
   onSelect: (id: number) => void;
 }
 
-export default function CategorySelector({ categories, selectedId, onSelect }: Props) {
+const CategorySelector = ({ categories, selectedId, onSelect }: Props) => {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      <View style={styles.container}>
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[styles.button, selectedId === cat.id && styles.activeButton]}
-            onPress={() => onSelect(cat.id)}
-          >
-            <Text style={[styles.text, selectedId === cat.id && styles.activeText]}>{cat.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+    <View style={styles.container}>
+      {categories.map((cat) => (
+        <TouchableOpacity
+          key={cat.id}
+          style={[
+            styles.button,
+            cat.id === selectedId && styles.selectedButton, // tô màu nút đang chọn
+          ]}
+          onPress={() => {
+            console.log('Pressed category:', cat); // debug
+            onSelect(cat.id)
+          }}
+        >
+          <Text style={styles.text}>{cat.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  container: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 },
   button: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#ddd',
-    borderRadius: 20,
+    padding: 10,
+    backgroundColor: '#ccc',
+    borderRadius: 6,
+    margin: 5,
   },
-  activeButton: { backgroundColor: '#007bff' },
-  text: { color: '#000' },
-  activeText: { color: '#fff', fontWeight: 'bold' },
+  selectedButton: {
+    backgroundColor: '#28a',
+  },
+  text: {
+    color: '#000',
+  },
 });
+
+export default CategorySelector;

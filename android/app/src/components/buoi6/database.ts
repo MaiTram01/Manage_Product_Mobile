@@ -10,10 +10,12 @@ const getDb = async (): Promise<SQLiteDatabase> => {
   return db;
 };
 
+// ==================== TYPES ====================
+
 export type Category = {
   id: number;
   name: string;
-}; 
+};
 
 export type Product = {
   id: number;
@@ -29,6 +31,8 @@ export type User = {
   password: string;
   role: string;
 };
+
+// ==================== INITIAL DATA ====================
 
 const initialCategories: Category[] = [
   { id: 1, name: 'Áo' },
@@ -46,30 +50,42 @@ const initialProducts: Product[] = [
   { id: 5, name: 'Túi xách nữ', price: 980000, img: 'hinh1.jpg', categoryId: 5 },
 ];
 
+// ==================== INIT DATABASE ====================
+
 export const initDatabase = async (onSuccess?: () => void): Promise<void> => {
   try {
     const database = await getDb();
     database.transaction(
       (tx) => {
+        // Create categories
         tx.executeSql('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT)');
         initialCategories.forEach((category) => {
-          tx.executeSql('INSERT OR IGNORE INTO categories (id, name) VALUES (?, ?)', [category.id, category.name]);
+          tx.executeSql('INSERT OR IGNORE INTO categories (id, name) VALUES (?, ?)', [
+            category.id,
+            category.name,
+          ]);
         });
 
-        tx.executeSql(`CREATE TABLE IF NOT EXISTS products (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
-          price REAL,
-          img TEXT,
-          categoryId INTEGER,
-          FOREIGN KEY (categoryId) REFERENCES categories(id)
-        )`);
+        // Create products
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            price REAL,
+            img TEXT,
+            categoryId INTEGER,
+            FOREIGN KEY (categoryId) REFERENCES categories(id)
+          )`
+        );
 
         initialProducts.forEach((product) => {
-          tx.executeSql('INSERT OR IGNORE INTO products (id, name, price, img, categoryId) VALUES (?, ?, ?, ?, ?)',
-            [product.id, product.name, product.price, product.img, product.categoryId]);
+          tx.executeSql(
+            'INSERT OR IGNORE INTO products (id, name, price, img, categoryId) VALUES (?, ?, ?, ?, ?)',
+            [product.id, product.name, product.price, product.img, product.categoryId]
+          );
         });
 
+        // Create users
         tx.executeSql(
           `CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +98,7 @@ export const initDatabase = async (onSuccess?: () => void): Promise<void> => {
           (_, error) => console.error('❌ Error creating users table:', error)
         );
 
+        // Insert default admin
         tx.executeSql(
           `INSERT INTO users (username, password, role)
           SELECT 'admin', '123456', 'admin'
@@ -102,15 +119,15 @@ export const initDatabase = async (onSuccess?: () => void): Promise<void> => {
   }
 };
 
+// ==================== CATEGORY CRUD ====================
+
 export const fetchCategories = async (): Promise<Category[]> => {
   try {
     const database = await getDb();
     const results = await database.executeSql('SELECT * FROM categories');
     const items: Category[] = [];
     const rows = results[0].rows;
-    for (let i = 0; i < rows.length; i++) {
-      items.push(rows.item(i));
-    }
+    for (let i = 0; i < rows.length; i++) items.push(rows.item(i));
     return items;
   } catch (error) {
     console.error('❌ Error fetching categories:', error);
@@ -118,15 +135,15 @@ export const fetchCategories = async (): Promise<Category[]> => {
   }
 };
 
+// ==================== PRODUCT CRUD ====================
+
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
     const database = await getDb();
     const results = await database.executeSql('SELECT * FROM products');
     const items: Product[] = [];
     const rows = results[0].rows;
-    for (let i = 0; i < rows.length; i++) {
-      items.push(rows.item(i));
-    }
+    for (let i = 0; i < rows.length; i++) items.push(rows.item(i));
     return items;
   } catch (error) {
     console.error('❌ Error fetching products:', error);
@@ -173,12 +190,12 @@ export const deleteProduct = async (id: number) => {
 export const fetchProductsByCategory = async (categoryId: number): Promise<Product[]> => {
   try {
     const db = await getDb();
-    const [results] = await db.executeSql('SELECT * FROM products WHERE categoryId = ?', [categoryId]);
+    const [results] = await db.executeSql('SELECT * FROM products WHERE categoryId = ?', [
+      categoryId,
+    ]);
     const products: Product[] = [];
     const rows = results.rows;
-    for (let i = 0; i < rows.length; i++) {
-      products.push(rows.item(i));
-    }
+    for (let i = 0; i < rows.length; i++) products.push(rows.item(i));
     return products;
   } catch (error) {
     console.error('❌ Error fetching products by category:', error);
@@ -186,33 +203,44 @@ export const fetchProductsByCategory = async (categoryId: number): Promise<Produ
   }
 };
 
-export const searchProductsByNameOrCategory = async (keyword: string): Promise<Product[]> => {
+export const searchProductsByNameOrCategory = async (
+  keyword: string
+): Promise<Product[]> => {
   try {
     const db = await getDb();
     const [results] = await db.executeSql(
       `
-      SELECT products.* FROM products
-      JOIN categories ON products.categoryId = categories.id
-      WHERE products.name LIKE ? OR categories.name LIKE ?
+        SELECT products.* FROM products
+        JOIN categories ON products.categoryId = categories.id
+        WHERE products.name LIKE ? OR categories.name LIKE ?
       `,
       [`%${keyword}%`, `%${keyword}%`]
     );
+
     const products: Product[] = [];
     const rows = results.rows;
-    for (let i = 0; i < rows.length; i++) {
-      products.push(rows.item(i));
-    }
+    for (let i = 0; i < rows.length; i++) products.push(rows.item(i));
     return products;
   } catch (error) {
-    console.error('❌ Error searching by name or category:', error);
+    console.error('❌ Error searching products:', error);
     return [];
   }
 };
 
-export const addUser = async (username: string, password: string, role: string): Promise<boolean> => {
+// ==================== USER CRUD (FULL + HOÀN CHỈNH) ====================
+
+export const addUser = async (
+  username: string,
+  password: string,
+  role: string
+): Promise<boolean> => {
   try {
     const db = await getDb();
-    await db.executeSql('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);
+    await db.executeSql('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [
+      username,
+      password,
+      role,
+    ]);
     console.log('✅ User added');
     return true;
   } catch (error) {
@@ -224,7 +252,10 @@ export const addUser = async (username: string, password: string, role: string):
 export const updateUser = async (user: User) => {
   try {
     const db = await getDb();
-    await db.executeSql('UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?', [user.username, user.password, user.role, user.id]);
+    await db.executeSql(
+      'UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?',
+      [user.username, user.password, user.role, user.id]
+    );
     console.log('✅ User updated');
   } catch (error) {
     console.error('❌ Error updating user:', error);
@@ -247,9 +278,7 @@ export const fetchUsers = async (): Promise<User[]> => {
     const [results] = await db.executeSql('SELECT * FROM users');
     const users: User[] = [];
     const rows = results.rows;
-    for (let i = 0; i < rows.length; i++) {
-      users.push(rows.item(i));
-    }
+    for (let i = 0; i < rows.length; i++) users.push(rows.item(i));
     return users;
   } catch (error) {
     console.error('❌ Error fetching users:', error);
@@ -257,14 +286,17 @@ export const fetchUsers = async (): Promise<User[]> => {
   }
 };
 
-export const getUserByCredentials = async (username: string, password: string): Promise<User | null> => {
+export const getUserByCredentials = async (
+  username: string,
+  password: string
+): Promise<User | null> => {
   try {
     const db = await getDb();
-    const [results] = await db.executeSql('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-    const rows = results.rows;
-    if (rows.length > 0) {
-      return rows.item(0);
-    }
+    const [results] = await db.executeSql(
+      'SELECT * FROM users WHERE username = ? AND password = ?',
+      [username, password]
+    );
+    if (results.rows.length > 0) return results.rows.item(0);
     return null;
   } catch (error) {
     console.error('❌ Error getting user by credentials:', error);
@@ -276,10 +308,7 @@ export const getUserById = async (id: number): Promise<User | null> => {
   try {
     const db = await getDb();
     const [results] = await db.executeSql('SELECT * FROM users WHERE id = ?', [id]);
-    const rows = results.rows;
-    if (rows.length > 0) {
-      return rows.item(0);
-    }
+    if (results.rows.length > 0) return results.rows.item(0);
     return null;
   } catch (error) {
     console.error('❌ Error getting user by id:', error);

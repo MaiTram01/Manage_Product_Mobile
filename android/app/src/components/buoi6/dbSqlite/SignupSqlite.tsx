@@ -1,72 +1,116 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
-import SQLite from "react-native-sqlite-storage";
-
-const db = SQLite.openDatabase(
-  { name: "MyDatabase.db", location: "default" },
-  () => console.log("Database opened"),
-  error => console.log("Error opening database", error)
-);
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { addUser } from '../database';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabParamList } from '../AppTabs';
 
 const SignupSqlite = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
+  const navigation = useNavigation<NativeStackNavigationProp<BottomTabParamList>>();
 
-  useEffect(() => {
-    db.transaction(tx => {
-      tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT);"
-      );
-    });
-  }, []);
-
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!username || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
-    db.transaction(tx => {
-      tx.executeSql(
-        "INSERT INTO users (username, password) VALUES (?, ?)",
-        [username, password],
-        () => Alert.alert("Success", "User registered successfully"),
-        (_, error) => {
-          console.log("Insert error:", error);
-          return false;
-        }
-      );
-    });
+    const success = await addUser(username, password, role);
 
-    setUsername("");
-    setPassword("");
+    if (success) {
+      Alert.alert('Success', 'User registered successfully');
+      navigation.navigate('LoginSqlite');
+    } else {
+      Alert.alert('Error', 'Signup failed. Username may already exist.');
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Signup</Text>
+
       <TextInput
-        style={styles.input}
         placeholder="Username"
+        style={styles.input}
         value={username}
         onChangeText={setUsername}
       />
+
       <TextInput
-        style={styles.input}
         placeholder="Password"
+        secureTextEntry
+        style={styles.input}
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
       />
-      <Button title="Sign Up" onPress={handleSignup} />
+
+      <View style={styles.roleContainer}>
+        <Text style={styles.label}>Role:</Text>
+
+        <TouchableOpacity onPress={() => setRole('user')}>
+          <Text style={[styles.roleOption, role === 'user' && styles.selected]}>User</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setRole('admin')}>
+          <Text style={[styles.roleOption, role === 'admin' && styles.selected]}>Admin</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+        <Text style={styles.signupText}>Signup</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, marginBottom: 15, borderRadius: 5 },
-});
-
 export default SignupSqlite;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 26,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: 25,
+  },
+  input: {
+    padding: 10,
+    borderWidth: 1,
+    marginBottom: 15,
+    borderRadius: 5,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  roleOption: {
+    marginHorizontal: 10,
+    padding: 5,
+    fontSize: 16,
+  },
+  selected: {
+    color: 'blue',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
+  label: {
+    fontWeight: 'bold',
+  },
+  signupButton: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  signupText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+});

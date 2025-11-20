@@ -1,45 +1,46 @@
-// HomeScreen.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import Header from './Header';
+import { Product, initDatabase, fetchProducts } from './database';
 import { HomeStackParamList } from './types';
-import { Product, initDatabase, fetchProducts } from './database'; // Import DB functions and Product type
 
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
-
-// Helper function to handle both local and database image paths
-const getImageSource = (img: string) => {
-  if (img && img.startsWith('file://')) {
-    return { uri: img }; // For images selected from the user's device
-  }
-  switch (img) {
-    case 'hinh1.jpg': return require('./hinh1.jpg');
-    case 'hinh2.jpg': return require('./hinh2.jpg');
-    case 'hinh3.jpg': return require('./hinh3.jpg');
-    case 'hinh4.jpg': return require('./hinh4.jpg');
-    default: return require('./hinh1.jpg'); // Fallback image
-  }
-};
 
 const HomeScreen = ({ navigation }: HomeScreenProps) => {
   const [products, setProducts] = useState<Product[]>([]);
 
-  // Load products from the database when the screen mounts
   useEffect(() => {
-    initDatabase(loadProducts);
+    initDatabase(() => {
+      loadData();
+    });
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     const prods = await fetchProducts();
-    setProducts(prods);
+    setProducts(prods.reverse());
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity onPress={() => navigation.navigate('Details', { product: item })} style={styles.productCard}>
-      <Image source={getImageSource(item.img)} style={styles.productImage} />
-      <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-      <Text style={styles.productPrice}>{item.price.toLocaleString()} đ</Text>
+  const getImageSource = (img: string) => {
+    if (img.startsWith('file://')) return { uri: img };
+    switch (img) {
+      case 'hinh1.jpg': return require('./hinh1.jpg');
+      case 'hinh2.jpg': return require('./hinh2.jpg');
+      case 'hinh3.jpg': return require('./hinh3.jpg');
+      case 'hinh4.jpg': return require('./hinh4.jpg');
+      default: return require('./hinh1.jpg');
+    }
+  };
+
+  const renderItem = ({ item }: { item: Product }) => (
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ProductDetail', { product: item })}
+      activeOpacity={0.8}
+    >
+      <Image source={getImageSource(item.img)} style={styles.productImage} resizeMode="contain" />
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productPrice}>{item.price} VND</Text>
       <TouchableOpacity style={styles.buyButton}>
         <Text style={styles.buyButtonText}>Mua Ngay</Text>
       </TouchableOpacity>
@@ -48,46 +49,71 @@ const HomeScreen = ({ navigation }: HomeScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <Image source={require('./banner.png')} style={styles.banner} />
+      <Image source={require('./banner.png')} style={styles.banner} resizeMode="cover" />
+      <Header />
       <View style={styles.menuContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.menuText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('About')}>
-          <Text style={styles.menuText}>Giới thiệu</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Categories')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Categories')}>
           <Text style={styles.menuText}>Danh mục</Text>
         </TouchableOpacity>
       </View>
       <Text style={styles.welcomeText}>Chào mừng đến với cửa hàng thời trang ABC!</Text>
+
       <FlatList
         data={products}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
         numColumns={2}
-        renderItem={renderProduct}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có sản phẩm nào.</Text>}
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 10 }}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>Không có sản phẩm nào</Text>}
       />
     </View>
   );
 };
 
-// Paste the original styles from your HomeScreen.tsx here
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  banner: { width: '100%', height: 130, resizeMode: 'cover' },
-  menuContainer: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, backgroundColor: '#fff', elevation: 4 },
-  menuText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  welcomeText: { fontSize: 18, fontWeight: '600', textAlign: 'center', marginVertical: 15, color: '#444' },
-  listContainer: { paddingBottom: 25 },
-  productCard: { flex: 1, backgroundColor: '#fff', margin: 8, borderRadius: 12, padding: 12, alignItems: 'center', elevation: 5 },
-  productImage: { width: '100%', height: 120, resizeMode: 'contain', borderRadius: 8, backgroundColor: '#fafafa' },
-  productName: { marginTop: 8, fontSize: 15, fontWeight: '600', color: '#222', textAlign: 'center' },
-  productPrice: { fontSize: 15, color: '#E91E63', fontWeight: 'bold', marginVertical: 8 },
-  buyButton: { width: '100%', backgroundColor: '#ff3b6b', paddingVertical: 10, borderRadius: 8 },
-  buyButtonText: { color: '#fff', fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  container: { flex: 1, backgroundColor: '#f4f4f4' },
+  banner: { width: '100%', height: 150 },
+  menuContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    elevation: 3,
+  },
+  menuItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+    backgroundColor: '#E91E63',
+    borderRadius: 25,
+  },
+  menuText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  welcomeText: {
+    textAlign: 'center',
+    fontSize: 18,
+    marginVertical: 15,
+    color: '#333',
+    fontWeight: '600',
+  },
+
+  columnWrapper: { justifyContent: 'space-between' },
+  productCard: {
+    backgroundColor: '#fff',
+    flex: 0.48,
+    marginBottom: 15,
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+    elevation: 4,
+  },
+  productImage: { width: '100%', height: 140, borderRadius: 10 },
+  productName: { fontSize: 14, fontWeight: 'bold', marginVertical: 5, textAlign: 'center', color: '#333' },
+  productPrice: { fontSize: 14, color: '#E91E63', marginBottom: 10, fontWeight: 'bold' },
+  buyButton: { backgroundColor: '#E91E63', paddingVertical: 7, paddingHorizontal: 20, borderRadius: 5 },
+  buyButtonText: { color: '#fff', fontWeight: 'bold' },
 });
 
 export default HomeScreen;
