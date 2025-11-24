@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { addUser } from '../database';
-import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabParamList } from '../AppTabs';
 
@@ -10,6 +11,23 @@ const SignupSqlite = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
   const navigation = useNavigation<NativeStackNavigationProp<BottomTabParamList>>();
+
+  // Check logged in every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const checkLoggedIn = async () => {
+        const loggedInUser = await AsyncStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+          Alert.alert(
+            'Already Logged In',
+            'You are already logged in. Please logout first.',
+            [{ text: 'OK', onPress: () => navigation.navigate('HomeTab') }]
+          );
+        }
+      };
+      checkLoggedIn();
+    }, [])
+  );
 
   const handleSignup = async () => {
     if (!username || !password) {
@@ -48,11 +66,9 @@ const SignupSqlite = () => {
 
       <View style={styles.roleContainer}>
         <Text style={styles.label}>Role:</Text>
-
         <TouchableOpacity onPress={() => setRole('user')}>
           <Text style={[styles.roleOption, role === 'user' && styles.selected]}>User</Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => setRole('admin')}>
           <Text style={[styles.roleOption, role === 'admin' && styles.selected]}>Admin</Text>
         </TouchableOpacity>
@@ -68,49 +84,13 @@ const SignupSqlite = () => {
 export default SignupSqlite;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 26,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    marginBottom: 25,
-  },
-  input: {
-    padding: 10,
-    borderWidth: 1,
-    marginBottom: 15,
-    borderRadius: 5,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  roleOption: {
-    marginHorizontal: 10,
-    padding: 5,
-    fontSize: 16,
-  },
-  selected: {
-    color: 'blue',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
-  label: {
-    fontWeight: 'bold',
-  },
-  signupButton: {
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  signupText: {
-    color: '#fff',
-    fontSize: 18,
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 26, textAlign: 'center', fontWeight: 'bold', marginBottom: 25 },
+  input: { padding: 10, borderWidth: 1, marginBottom: 15, borderRadius: 5 },
+  roleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  roleOption: { marginHorizontal: 10, padding: 5, fontSize: 16 },
+  selected: { color: 'blue', fontWeight: 'bold', textDecorationLine: 'underline' },
+  label: { fontWeight: 'bold' },
+  signupButton: { backgroundColor: '#4CAF50', padding: 12, borderRadius: 6, alignItems: 'center' },
+  signupText: { color: '#fff', fontSize: 18 },
 });
