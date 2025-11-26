@@ -1,20 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Header from './Header';
 import { Product, initDatabase, fetchProducts } from './database';
 import { HomeStackParamList } from './types';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 type HomeScreenProps = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 const HomeScreen = ({ navigation }: HomeScreenProps) => {
   const [products, setProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    initDatabase(() => {
-      loadData();
-    });
-  }, []);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  useFocusEffect(
+    useCallback(() => {
+      const checkUser = async () => {
+        const userStr = await AsyncStorage.getItem('loggedInUser');
+        if (userStr) {
+          setUserInfo(JSON.parse(userStr));
+        } else {
+          setUserInfo(null);
+        }
+      };
+      
+      initDatabase(() => {
+        loadData();
+      });
+      checkUser();
+    }, [])
+  );
 
   const loadData = async () => {
     const prods = await fetchProducts();
@@ -51,6 +64,14 @@ const HomeScreen = ({ navigation }: HomeScreenProps) => {
     <View style={styles.container}>
       <Image source={require('./banner.png')} style={styles.banner} resizeMode="cover" />
       <Header />
+       {userInfo && userInfo.role === 'admin' && (
+        <TouchableOpacity 
+          style={styles.adminButton}
+          onPress={() => navigation.navigate('AdminDashboard')}
+        >
+          <Text style={styles.adminButtonText}>🛡️ Vào trang Quản Trị (Admin)</Text>
+        </TouchableOpacity>
+      )}
       <View style={styles.menuContainer}>
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.menuText}>Home</Text>
@@ -108,6 +129,20 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     elevation: 4,
+  },
+   adminButton: {
+    backgroundColor: '#FF9800', // Màu cam nổi bật
+    padding: 12,
+    margin: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  adminButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textTransform: 'uppercase',
   },
   productImage: { width: '100%', height: 140, borderRadius: 10 },
   productName: { fontSize: 14, fontWeight: 'bold', marginVertical: 5, textAlign: 'center', color: '#333' },

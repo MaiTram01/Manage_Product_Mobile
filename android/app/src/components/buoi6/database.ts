@@ -121,6 +121,41 @@ export const initDatabase = async (onSuccess?: () => void): Promise<void> => {
 
 // ==================== CATEGORY CRUD ====================
 
+export const addCategory = async (name: string): Promise<boolean> => {
+  try {
+    const db = await getDb();
+    await db.executeSql('INSERT INTO categories (name) VALUES (?)', [name]);
+    console.log('✅ Category added');
+    return true;
+  } catch (error) {
+    console.error('❌ Error adding category:', error);
+    return false;
+  }
+};
+
+export const updateCategory = async (id: number, name: string) => {
+  try {
+    const db = await getDb();
+    await db.executeSql('UPDATE categories SET name = ? WHERE id = ?', [name, id]);
+    console.log('✅ Category updated');
+  } catch (error) {
+    console.error('❌ Error updating category:', error);
+  }
+};
+
+export const deleteCategory = async (id: number) => {
+  try {
+    const db = await getDb();
+    // Tùy chọn: Xóa các sản phẩm thuộc danh mục này trước (nếu cần)
+    // await db.executeSql('DELETE FROM products WHERE categoryId = ?', [id]);
+    
+    await db.executeSql('DELETE FROM categories WHERE id = ?', [id]);
+    console.log('✅ Category deleted');
+  } catch (error) {
+    console.error('❌ Error deleting category:', error);
+  }
+};
+
 export const fetchCategories = async (): Promise<Category[]> => {
   try {
     const database = await getDb();

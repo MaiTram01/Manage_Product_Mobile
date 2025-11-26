@@ -27,7 +27,8 @@ export type HomeStackParamList = {
     Home: undefined;
     Details: { product: Product1 };  //trang này có tham số nhận vào là product
     ProductDetail: { product: Product };  //trang này có tham số nhận vào là product
-    ProductsByCategory: undefined;
+    // ProductsByCategory: undefined;
+    ProductsByCategory: { categoryId: number; categoryName?: string };
     Accessory: undefined;
     Fashion: undefined;
     Categories:undefined;

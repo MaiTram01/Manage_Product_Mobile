@@ -1,29 +1,29 @@
+// AppNavigatorProduct.tsx
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Sanpham3Sqlite from './Sanpham3Sqlite';
 import ProductDetailScreen from './ProductDetailScreen';
-import ProductListScreen from './ProductsByCategoryScreen';
 import ProductsByCategoryScreen from './ProductsByCategoryScreen';
-import { Category, Product } from './database';
+import CategoryManagementScreen from './CategoryManagementScreen'; 
+import { Product } from './database';
 
-// ✅ Mở rộng type cho tất cả các màn hình
 export type RootStackParamList = {
   Sanpham3Sqlite: undefined;
   ProductDetail: { product: Product };
-  ProductsByCategory: { categoryId: number; categoryName?: string }; // mới
+  ProductsByCategory: { categoryId: number; categoryName?: string };
+  CategoryManagement: undefined; // Thêm route này
 };
 
-// Gán type này cho Stack Navigator
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigatorProduct() {
   return (
     <Stack.Navigator>
-      {/* Màn hình cũ */}
-      <Stack.Screen name="Sanpham3Sqlite" component={Sanpham3Sqlite} options={{ title: 'Tất cả sản phẩm' }} />
+      <Stack.Screen name="Sanpham3Sqlite" component={Sanpham3Sqlite} options={{ title: 'Quản lý Sản phẩm' }} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Chi tiết sản phẩm' }} />
-
-      {/* Màn hình mới */}
-      <Stack.Screen name="ProductsByCategory" component={ProductsByCategoryScreen} />    
+      <Stack.Screen name="ProductsByCategory" component={ProductsByCategoryScreen} />
+      
+      {/* Thêm màn hình quản lý loại */}
+      <Stack.Screen name="CategoryManagement" component={CategoryManagementScreen} options={{ title: 'Quản lý Loại' }} />
     </Stack.Navigator>
   );
 }

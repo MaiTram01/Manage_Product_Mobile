@@ -1,5 +1,5 @@
 //danh sách sản phẩm hiển thị bằng FlatList
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Alert,
   View, Text, TextInput, TouchableOpacity,
   Image, ScrollView, StyleSheet, FlatList
@@ -19,7 +19,7 @@ import {
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './AppNavigatorProduct';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Sanpham3Sqlite'>;
@@ -36,11 +36,13 @@ const Sanpham3Sqlite = () => {
   const navigation = useNavigation<NavigationProp>();
 
 
-  useEffect(() => {
-    initDatabase(() => {
-      loadData(); // chỉ gọi sau khi transaction xong
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      initDatabase(() => {
+        loadData();
+      });
+    }, [])
+  );
   
   
 
@@ -184,6 +186,12 @@ const Sanpham3Sqlite = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Quản lý sản phẩm</Text>
+      <TouchableOpacity 
+        style={[styles.button, { backgroundColor: '#FF9800', marginBottom: 15 }]} 
+        onPress={() => navigation.navigate('CategoryManagement')}
+      >
+        <Text style={styles.buttonText}>⚙️ Quản lý Loại Sản Phẩm</Text>
+      </TouchableOpacity>
       <TextInput
         style={styles.input}
         placeholder="Tên sản phẩm"
